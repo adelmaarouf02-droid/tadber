@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and progress data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "email": { "type": "string", "description": "User's email" },
+        "photoURL": { "type": "string", "description": "User's avatar URL" },
+        "lastReadSurah": { "type": "number", "description": "Last read Surah number" },
+        "lastReadAyah": { "type": "number", "description": "Last read Ayah number" },
+        "dailyGoal": { "type": "number", "description": "Daily ayah goal" },
+        "completedAyahsToday": { "type": "number", "description": "Ayahs read today" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "Khatmah": {
+      "title": "Khatmah",
+      "description": "Collective reading group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "participantsCount": { "type": "number" },
+        "progress": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "creatorId", "status", "createdAt"]
+    },
+    "KhatmahParticipant": {
+      "title": "KhatmahParticipant",
+      "description": "User participation in a Khatmah",
+      "type": "object",
+      "properties": {
+        "khatmahId": { "type": "string" },
+        "userId": { "type": "string" },
+        "progress": { "type": "number" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["khatmahId", "userId", "joinedAt"]
+    },
+    "Memorization": {
+      "title": "Memorization",
+      "description": "User's memorization progress for a specific Surah",
+      "type": "object",
+      "properties": {
+        "surahNumber": { "type": "number" },
+        "memorizedAyahs": { "type": "array", "items": { "type": "number" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["surahNumber", "memorizedAyahs", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/users/{userId}/memorization/{surahNumber}": {
+      "schema": "Memorization",
+      "description": "User's memorization progress per surah"
+    },
+    "/khatmahs/{khatmahId}": {
+      "schema": "Khatmah",
+      "description": "Collective reading groups"
+    },
+    "/khatmahs/{khatmahId}/participants/{userId}": {
+      "schema": "KhatmahParticipant",
+      "description": "Participants in a specific khatmah"
+    }
+  }
+}

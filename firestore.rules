@@ -1,0 +1,150 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches Auth UID)
+    // Fields:
+    //   - uid: string (required)
+    //   - displayName: string (optional)
+    //   - email: string (optional, PII)
+    //   - photoURL: string (optional)
+    //   - lastReadSurah: number
+    //   - lastReadAyah: number
+    //   - dailyGoal: number
+    //   - completedAyahsToday: number
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: khatmahs
+    // Document ID: {khatmahId}
+    // Fields:
+    //   - title: string (required, 1-100 chars)
+    //   - description: string (optional, < 500 chars)
+    //   - creatorId: string (required)
+    //   - participantsCount: number (required)
+    //   - progress: number (required, 0-100)
+    //   - status: string (required, enum: active, completed)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: khatmahs/{khatmahId}/participants
+    // Document ID: {userId}
+    // Fields:
+    //   - khatmahId: string (required)
+    //   - userId: string (required)
+    //   - progress: number (required)
+    //   - joinedAt: timestamp (required)
+    //
+    // Collection: users/{userId}/memorization
+    // Document ID: {surahNumber}
+    // Fields:
+    //   - surahNumber: number (required)
+    //   - memorizedAyahs: list (required, list of ayah numbers)
+    //   - updatedAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "adelmaarouf02@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.createdAt is timestamp &&
+             (!('email' in data) || isValidEmail(data.email)) &&
+             (!('photoURL' in data) || isValidUrl(data.photoURL)) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100));
+    }
+
+    function isValidKhatmah(data) {
+      return data.keys().hasAll(['title', 'creatorId', 'participantsCount', 'progress', 'status', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 100 &&
+             data.creatorId is string &&
+             data.participantsCount is number &&
+             data.progress is number && data.progress >= 0 && data.progress <= 100 &&
+             data.status in ['active', 'completed'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidParticipant(data) {
+      return data.keys().hasAll(['khatmahId', 'userId', 'progress', 'joinedAt']) &&
+             data.userId == request.auth.uid &&
+             data.progress is number && data.progress >= 0 &&
+             data.joinedAt is timestamp;
+    }
+
+    function isValidMemorization(data) {
+      return data.keys().hasAll(['surahNumber', 'memorizedAyahs', 'updatedAt']) &&
+             data.surahNumber is number &&
+             data.memorizedAyahs is list &&
+             data.updatedAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      // PII Protection: Only owner can read their own profile
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    request.resource.data.uid == resource.data.uid &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+
+      match /memorization/{surahNumber} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && isValidMemorization(request.resource.data);
+      }
+    }
+
+    match /khatmahs/{khatmahId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidKhatmah(request.resource.data) && 
+                    request.resource.data.creatorId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidKhatmah(request.resource.data) && (
+        // Creator can update everything except createdAt
+        (resource.data.creatorId == request.auth.uid && request.resource.data.createdAt == resource.data.createdAt) ||
+        // Others can only update progress and participantsCount via specific logic (simplified here for prototype)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['progress', 'participantsCount']))
+      );
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.creatorId == request.auth.uid);
+
+      match /participants/{participantId} {
+        allow read: if isAuthenticated();
+        allow create: if isOwner(participantId) && isValidParticipant(request.resource.data);
+        allow update: if isOwner(participantId) && isValidParticipant(request.resource.data) &&
+                      request.resource.data.joinedAt == resource.data.joinedAt;
+        allow delete: if isOwner(participantId) || isAdmin();
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "تدبر",
+  "description": "A clean, minimal Quran application for reflection (Tadabbur), featuring daily verses, audio playback, and community reading progress.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
