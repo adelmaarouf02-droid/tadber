@@ -22,7 +22,7 @@ export const quranApi = {
   },
 
   async search(query: string): Promise<any> {
-    const response = await fetch(`${BASE_URL}/search/${query}/all/ar`);
+    const response = await fetch(`${BASE_URL}/search/${encodeURIComponent(query)}/quran-uthmani/ar`);
     const data = await response.json();
     return data.data;
   }

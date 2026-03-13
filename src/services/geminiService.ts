@@ -1,21 +1,23 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export const geminiService = {
-  async generateTadabbur(ayahText: string, surahName: string, ayahNumber: number): Promise<string> {
+  async generateTadabbur(text: string, surahName: string, ayahNumber: number): Promise<string> {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `أنت خبير في التفسير والتدبر. قم بتقديم تدبر بسيط ومختصر (حوالي 3-4 جمل) للآية التالية من سورة ${surahName}، الآية رقم ${ayahNumber}: "${ayahText}". ركز على المعنى الإيماني والعملي.`,
-        config: {
-          systemInstruction: "You are a helpful assistant that provides short, spiritual reflections on Quranic verses in Arabic.",
-        },
+        contents: `Provide a short, inspiring reflection (Tadabbur) in Arabic for the following Quranic verse:
+        Surah: ${surahName}, Ayah: ${ayahNumber}
+        Text: "${text}"
+        
+        The reflection should be concise (2-3 sentences) and spiritually uplifting.`,
       });
-      return response.text || "لا يتوفر تدبر حالياً.";
+      return response.text || "سبحان الله وبحمده";
     } catch (error) {
-      console.error("Gemini Error:", error);
-      return "حدث خطأ أثناء جلب التدبر.";
+      console.error("Gemini API error:", error);
+      // Return a fallback message if the API call fails (e.g., due to rate limits)
+      return "تأمل في هذه الآية الكريمة واستشعر عظمة الله فيها.";
     }
   }
 };

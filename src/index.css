@@ -31,3 +31,12 @@ body {
   @apply bg-stone-400 dark:bg-stone-600;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

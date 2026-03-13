@@ -38,7 +38,7 @@ export const Audio: React.FC = () => {
     setCurrentSurah(surah);
     setIsPlaying(true);
     if (audioRef.current) {
-      audioRef.current.src = `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surah.number}.mp3`;
+      audioRef.current.src = `https://cdn.islamic.network/quran/audio-surah/128/ar.husarymujawwad/${surah.number}.mp3`;
       
       const playAudio = async () => {
         try {
