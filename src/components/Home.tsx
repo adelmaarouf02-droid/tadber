@@ -193,7 +193,7 @@ export const Home: React.FC = () => {
 
       <section className="space-y-4">
         <h2 className="text-xl font-bold font-serif italic">تدبر الآية</h2>
-        <div className="bg-stone-100 dark:bg-stone-900 rounded-2xl p-6 border border-stone-200 dark:border-stone-800">
+        <div className="bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-900 dark:to-stone-800 rounded-2xl p-6 border border-stone-200 dark:border-stone-800">
           <p className="text-lg leading-relaxed text-stone-700 dark:text-stone-300">
             {dailyAyah?.tafsir}
           </p>

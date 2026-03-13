@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Search, ChevronLeft, BookOpen, CheckCircle2, Volume2, VolumeX, Play, Pause, Bookmark, BookmarkCheck, Mic, MicOff, Eye, EyeOff, Settings as SettingsIcon, GraduationCap, WrapText, Loader2, AlertCircle, Plus, X, GripHorizontal } from 'lucide-react';
+import { Search, ChevronLeft, BookOpen, CheckCircle2, Volume2, VolumeX, Play, Pause, Bookmark, BookmarkCheck, Mic, MicOff, Eye, EyeOff, Settings as SettingsIcon, GraduationCap, WrapText, Loader2, AlertCircle, Plus, X, GripHorizontal, Sparkles } from 'lucide-react';
 import { quranApi } from '../services/quranApi';
 import { Surah, SurahDetail, Ayah } from '../types/quran';
 import { recitationService } from '../services/recitationService';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useFirebase } from '../context/FirebaseContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -43,20 +43,24 @@ export const Quran: React.FC = () => {
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const constraintsRef = useRef<HTMLDivElement>(null);
 
-  // Suppress ResizeObserver loop limit exceeded error
+  // Suppress ResizeObserver loop errors
   useEffect(() => {
-    const errorHandler = (e: ErrorEvent) => {
-      if (e.message.includes('ResizeObserver loop')) {
-        const resizeObserverErrGuid = '84460ccc-a170-43ad-85f5-afc72e08e71c';
+    const errorHandler = (e: ErrorEvent | PromiseRejectionEvent) => {
+      const message = (e as ErrorEvent).message || (e as PromiseRejectionEvent).reason?.message || '';
+      if (message.includes('ResizeObserver loop')) {
         if (e.stopImmediatePropagation) {
           e.stopImmediatePropagation();
-        } else {
+        } else if (e.stopPropagation) {
           e.stopPropagation();
         }
       }
     };
     window.addEventListener('error', errorHandler);
-    return () => window.removeEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', errorHandler);
+    return () => {
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', errorHandler);
+    };
   }, []);
 
   // Auto-scroll to active ayah
@@ -1095,6 +1099,10 @@ export const Quran: React.FC = () => {
                     return (
                       <div key={`header-${surah.number}`} className="text-center space-y-4 mb-12">
                         <div className="relative border-y-2 border-double border-emerald-700 dark:border-emerald-500 py-6 my-8 bg-emerald-50/30 dark:bg-emerald-900/10">
+                          <div className="absolute top-2 left-2 text-emerald-700 dark:text-emerald-500 text-3xl">❁</div>
+                          <div className="absolute top-2 right-2 text-emerald-700 dark:text-emerald-500 text-3xl">❁</div>
+                          <div className="absolute bottom-2 left-2 text-emerald-700 dark:text-emerald-500 text-3xl">❁</div>
+                          <div className="absolute bottom-2 right-2 text-emerald-700 dark:text-emerald-500 text-3xl">❁</div>
                           <div className="absolute inset-0 border-y border-emerald-700/30 dark:border-emerald-500/30 m-1"></div>
                           
                           <div className="flex justify-between items-center text-emerald-800 dark:text-emerald-400 text-sm font-serif px-6 mb-4">
@@ -1135,7 +1143,7 @@ export const Quran: React.FC = () => {
                 })}
 
                 <div className={cn(
-                  "p-8 rounded-3xl transition-colors relative", 
+                  "p-4 md:p-8 rounded-3xl transition-colors relative border-2 md:border-4 border-double border-stone-300 dark:border-stone-700", 
                   getThemeClasses(),
                   "text-center leading-[2.5] md:leading-[3]"
                 )} dir="rtl">
@@ -1156,8 +1164,10 @@ export const Quran: React.FC = () => {
                     return (
                       <span key={ayah.number} className="inline">
                         {isNewQuarter && index > 0 && (
-                          <span className="inline-flex items-center justify-center mx-2 text-emerald-700 dark:text-emerald-500 text-2xl" title={getQuarterMarker(ayah.hizbQuarter)}>
+                          <span className="inline-flex items-center justify-center mx-4 text-emerald-700 dark:text-emerald-500 text-2xl relative" title={getQuarterMarker(ayah.hizbQuarter)}>
+                            <span className="absolute -left-6 text-emerald-600/50 dark:text-emerald-400/50 text-xl">☙</span>
                             ۞
+                            <span className="absolute -right-6 text-emerald-600/50 dark:text-emerald-400/50 text-xl">❧</span>
                           </span>
                         )}
                         <span 

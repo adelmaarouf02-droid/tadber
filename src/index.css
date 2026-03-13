@@ -8,6 +8,9 @@
 
 .quran-text {
   font-family: 'Amiri Quran', 'Amiri', serif;
+  line-height: 2.5;
+  font-size: 1.75rem;
+  letter-spacing: 0.02em;
 }
 
 body {
